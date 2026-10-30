@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06150c">
+<title>2048 · Avengers: Doomsday</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --doom:#2fbf71; --doom-mid:#1e6b3f; --doom-dark:#0b2a17; --doom-deep:#06150c;
+  --font:'Barlow Condensed','Oswald','Arial Narrow',Impact,sans-serif;
+  --gap:2.6%; --cell:22.3%;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:var(--font); color:#fff; background:var(--doom-deep);
+  background-image:linear-gradient(180deg,rgba(6,21,12,.55),rgba(6,21,12,.88)),
+    url("https://4kwallpapers.com/images/wallpapers/avengers-doomsday-7680x4320-26919.jpg");
+  background-size:cover; background-position:center top; background-attachment:fixed;
+  padding:max(14px,env(safe-area-inset-top)) 14px max(24px,env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; align-items:center; overflow-x:hidden;
+}
+
+header {
+    text-align: center;
+    width: 100%;
+    max-width: 600px;
+    position: relative;
+    z-index: 1;
+}
+
+.logo{width:min(78vw,340px);height:auto;filter:drop-shadow(0 0 18px rgba(47,191,113,.35))}
+.logo-fallback{font-weight:700;font-size:34px;letter-spacing:.08em;color:var(--doom)}
+
+/* Contador estilo directo de Marvel */
+.countdown{display:flex;justify-content:center;align-items:flex-start;gap:clamp(8px,3vw,18px);margin:10px 0 2px}
+.unit{display:flex;flex-direction:column;align-items:center;min-width:clamp(48px,14vw,68px)}
+.unit b{font-weight:500;font-size:clamp(34px,10.5vw,54px);line-height:.95;font-variant-numeric:tabular-nums;letter-spacing:.02em;text-shadow:0 2px 14px rgba(0,0,0,.7)}
+.unit span{font-weight:500;font-size:clamp(10px,2.6vw,12px);letter-spacing:.28em;text-transform:uppercase;color:#fff;opacity:.85;margin-top:2px;padding-left:.28em}
+.sep{font-weight:500;font-size:clamp(28px,8vw,42px);line-height:1;opacity:.55;padding-top:3px}
+.premiere{font-size:13px;letter-spacing:.3em;text-transform:uppercase;opacity:.7;margin:4px 0 0;padding-left:.3em}
+
+
+main {
+    width: 100%;
+    max-width: 520px;
+    margin: 22px auto 0;
+    position: relative;
+    z-index: 1;
+}
+
+.bar{display:flex;gap:10px;align-items:stretch;margin-bottom:12px}
+
+.box {
+    flex: 1;
+    background: linear-gradient(
+        145deg,
+        rgba(17, 48, 29, .88),
+        rgba(4, 18, 10, .94)
+    );
+    border: 1px solid rgba(47, 191, 113, .55);
+    border-radius: 12px;
+    padding: 9px 12px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    box-shadow:
+        0 5px 18px rgba(0, 0, 0, .25),
+        inset 0 1px 0 rgba(255,255,255,.05);
+    transition: border-color .25s, box-shadow .25s;
+}
+
+.box:hover {
+    border-color: var(--doom);
+    box-shadow: 0 0 18px rgba(47, 191, 113, .18);
+}
+
+.box small {
+    display: block;
+    font-size: 12px;
+    letter-spacing: .22em;
+    color: var(--doom);
+    text-transform: uppercase;
+}
+
+.box strong {
+    display: block;
+    font-size: 29px;
+    font-weight: 700;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+
+button{font-family:var(--font);font-weight:600;font-size:18px;letter-spacing:.12em;text-transform:uppercase;color:#eafff1;
+  background:linear-gradient(180deg,var(--doom-mid),var(--doom-dark));border:1px solid var(--doom);border-radius:10px;padding:0 16px;cursor:pointer;
+  box-shadow:0 0 14px rgba(47,191,113,.25)}
+button:hover{box-shadow:0 0 22px rgba(47,191,113,.5)}
+button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+/* Tablero */
+
+.board {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    touch-action: none;
+    user-select: none;
+
+    background: linear-gradient(
+        145deg,
+        rgba(5, 25, 13, .94),
+        rgba(2, 12, 7, .97)
+    );
+
+    border: 1px solid rgba(47, 191, 113, .65);
+    border-radius: 18px;
+    padding: 2.6%;
+
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, .9),
+        0 0 35px rgba(47, 191, 113, .16),
+        0 15px 40px rgba(0, 0, 0, .4),
+        inset 0 0 35px rgba(0, 0, 0, .55);
+
+    backdrop-filter: blur(10px);
+}
+
+  background:rgba(6,21,12,.8);border:2px solid var(--doom-mid);border-radius:16px;padding:2.6%;
+  box-shadow:0 0 0 1px #000,0 0 36px rgba(47,191,113,.22),inset 0 0 30px rgba(0,0,0,.6);backdrop-filter:blur(6px)}
+.grid{position:absolute;inset:2.6%}
+
+.slot {
+    position: absolute;
+    width: var(--cell);
+    height: var(--cell);
+
+    background: rgba(47, 191, 113, .055);
+    border: 1px solid rgba(47, 191, 113, .16);
+    border-radius: 11px;
+
+    box-shadow: inset 0 0 12px rgba(47, 191, 113, .025);
+}
+
+.tile{position:absolute;width:var(--cell);height:var(--cell);border-radius:10px;overflow:hidden;
+  border:2px solid var(--c);box-shadow:0 0 12px var(--c),inset 0 0 0 1px rgba(0,0,0,.5);background:#111;
+  transition:left .12s ease-out,top .12s ease-out}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 22%}
+.tile::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 62%,rgba(0,0,0,.85))}
+.tile .nm{position:absolute;left:0;right:0;bottom:2px;z-index:2;text-align:center;font-size:clamp(8px,2.6vw,12px);font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;text-shadow:0 1px 3px #000;line-height:1}
+.tile.new{animation:appear .18s ease-out}
+.tile.pop{animation:pop .2s ease-out}
+@keyframes appear{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes pop{50%{transform:scale(1.14)}}
+.tile.max{animation:pop .4s ease-out 1,glow 1.6s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 26px var(--c),0 0 6px #fff}}
+
+.overlay{position:absolute;inset:0;border-radius:16px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background:rgba(6,21,12,.88);backdrop-filter:blur(4px);text-align:center;z-index:10;padding:20px}
+.overlay.show{display:flex}
+.overlay h2{margin:0;font-size:clamp(30px,9vw,44px);letter-spacing:.06em;text-transform:uppercase;color:var(--doom);text-shadow:0 0 18px rgba(47,191,113,.5)}
+.overlay p{margin:0;font-size:18px;opacity:.85}
+.overlay button{height:44px}
+.hint{text-align:center;font-size:14px;letter-spacing:.1em;opacity:.6;margin-top:12px}
+/* Botón de música */
+.music{position:fixed;top:max(10px,env(safe-area-inset-top));right:10px;z-index:20;width:44px;height:44px;padding:0;border-radius:50%;
+  display:grid;place-items:center;background:rgba(6,21,12,.8)}
+.music svg{width:22px;height:22px;fill:none;stroke:#eafff1;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.music .off{display:none}.music.muted .on{display:none}.music.muted .off{display:block}
+#bgMusic {
+    display: none;
+}
+
+/* Flechita que gira y despliega los personajes */
+.toggle{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:14px;height:46px;font-size:17px}
+.toggle svg{width:20px;height:20px;fill:none;stroke:var(--doom);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;transition:transform .35s ease}
+.toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+.roster{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s ease}
+.roster.open{grid-template-rows:1fr}
+.roster>div{overflow:hidden}
+.roster ul{list-style:none;margin:10px 0 0;padding:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+  background:rgba(6,21,12,.75);border:1px solid var(--doom-mid);border-radius:12px;backdrop-filter:blur(6px)}
+.roster li{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:2px solid var(--c);box-shadow:0 0 8px var(--c)}
+.roster li img{width:100%;height:100%;object-fit:cover;object-position:50% 22%}
+.roster li span{position:absolute;inset:auto 0 2px;text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;text-shadow:0 1px 3px #000;line-height:1}
+.roster li::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(0,0,0,.85))}
+.roster li span{z-index:2}
+@media (prefers-reduced-motion:reduce){.toggle svg,.roster{transition:none}}
+@media (prefers-reduced-motion:reduce){.tile,.tile.new,.tile.pop,.tile.max{animation:none;transition:none}}
+
+/* ===== ADAPTACION RESPONSIVE ===== */
+
+@media (max-width: 600px) {
+
+    body {
+        padding-left: 12px;
+        padding-right: 12px;
+        background-attachment: scroll;
+    }
+
+    header {
+        max-width: 100%;
+    }
+
+    .logo {
+        width: min(75vw, 310px);
+    }
+
+    main {
+        max-width: 480px;
+        margin-top: 18px;
+    }
+
+    .board {
+        border-radius: 14px;
+    }
+
+    .bar {
+        gap: 7px;
+    }
+
+    .box {
+        padding: 7px 5px;
+    }
+
+    .box strong {
+        font-size: 24px;
+    }
+
+    .bar button {
+        padding: 0 12px;
+        font-size: 16px;
+    }
+
+    .roster ul {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 360px) {
+
+    .unit {
+        min-width: 42px;
+    }
+
+    .unit b {
+        font-size: 31px;
+    }
+
+    .countdown {
+        gap: 5px;
+    }
+}
+
+/* ===== CONTROLES DIRECCIONALES ===== */
+
+.direction-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 58px);
+    grid-template-rows: repeat(2, 50px);
+    justify-content: center;
+    gap: 8px;
+    margin: 18px auto 8px;
+}
+
+.dir-btn {
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+    font-family: Arial, sans-serif;
+    font-size: 27px;
+    font-weight: 700;
+
+    color: #d9ffe5;
+
+    background: linear-gradient(
+        145deg,
+        rgba(30, 107, 63, .95),
+        rgba(6, 35, 18, .98)
+    );
+
+    border: 1px solid rgba(47, 191, 113, .65);
+    border-radius: 12px;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,.4),
+        inset 0 1px 0 rgba(255,255,255,.08);
+
+    cursor: pointer;
+    transition: .15s ease;
+    touch-action: manipulation;
+}
+
+.dir-btn:active {
+    transform: scale(.91);
+    background: #2fbf71;
+    color: #06150c;
+    box-shadow: 0 0 18px rgba(47,191,113,.5);
+}
+
+.dir-btn.up {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.dir-btn.left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.dir-btn.down {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.dir-btn.right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+@media (min-width: 601px) {
+    .direction-pad {
+        opacity: .85;
+    }
+}
+
+
+
+</style>
+</head>
+<body>
+<header>
+  <img class="logo" alt="Avengers: Doomsday" src="https://cdn.marvel.com/content/1x/avengersdoomsday_lob_log_def_02.webp"
+       referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo-fallback',textContent:'AVENGERS: DOOMSDAY'}))">
+  <div class="countdown" id="cd" aria-live="off">
+    <div class="unit"><b id="d">00</b><span>Días</span></div><div class="sep">:</div>
+    <div class="unit"><b id="h">00</b><span>Horas</span></div><div class="sep">:</div>
+    <div class="unit"><b id="m">00</b><span>Min</span></div><div class="sep">:</div>
+    <div class="unit"><b id="s">00</b><span>Seg</span></div>
+  </div>
+  <p class="premiere" id="prem">Estreno 17 de diciembre</p>
+</header>
+
+<main>
+  <div class="bar">
+    <div class="box"><small>Puntos</small><strong id="score">0</strong></div>
+    <div class="box"><small>Récord</small><strong id="best">0</strong></div>
+    <button id="restart" aria-label="Nueva partida">Nuevo</button>
+  </div>
+  <div class="board-wrap">
+    <div class="board" id="board"><div class="grid" id="grid"></div></div>
+    <div class="overlay" id="ov">
+      <h2 id="ovT"></h2><p id="ovP"></p>
+      <button id="ovB">Continuar</button>
+    </div>
+  </div>
+  <p class="hint">Desliza o usa las flechas · Une personajes iguales hasta llegar a Doom</p>
+
+<!-- CONTROLES TACTILES -->
+<div class="direction-pad">
+
+    <button class="dir-btn up"
+            data-dr="-1" data-dc="0"
+            aria-label="Mover arriba">↑</button>
+
+    <button class="dir-btn left"
+            data-dr="0" data-dc="-1"
+            aria-label="Mover izquierda">←</button>
+
+    <button class="dir-btn down"
+            data-dr="1" data-dc="0"
+            aria-label="Mover abajo">↓</button>
+
+    <button class="dir-btn right"
+            data-dr="0" data-dc="1"
+            aria-label="Mover derecha">→</button>
+
+</div>
+
+  <button class="toggle" id="tg" aria-expanded="false" aria-controls="roster">
+    Personajes
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+  </button>
+  <div class="roster" id="roster"><div><ul id="rl"></ul></div></div>
+</main>
+
+<button class="music muted" id="mu" aria-label="Activar música">
+  <svg class="on" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/></svg>
+  <svg class="off" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>
+</button>
+<audio id="bgMusic" loop preload="none">
+    <source src="music/soundtrack.mp3" type="audio/mpeg">
+    Tu navegador no soporta audio HTML5.
+</audio>
+
+<script>
+/* ===== PERSONAJES (de menor a mayor). Cambia "img" por rutas locales si alguna URL no carga ===== */
+const CHARS = [
+  {n:"Yelena Belova", c:"#94a3b8", img:"https://www.thewrap.com/wp-content/uploads/2026/07/yelena-doomsday.jpg?width=990&height=557&fit=bounds"},
+  {n:"Shuri",         c:"#8b5cf6", img:"https://images.thedirect.com/media/photos/shuri-s-new-black-and-gold-black-panther-suit.jpg"},
+  {n:"Steve Rogers",  c:"#3b82f6", img:"https://sm.ign.com/t/ign_es/news/n/new-avenge/new-avengers-doomsday-trailer-pokes-fun-at-multiple-captains_5tts.1280.jpg"},
+  {n:"Magneto",       c:"#c026d3", img:"https://i0.wp.com/movizark.com/wp-content/uploads/2026/10/AVENGERS-Doomsday-Magneto.jpg?resize=1500%2C768&ssl=1"},
+  {n:"Sentry",        c:"#fde68a", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3gt4UqZj4HA6D4a3VsOiDJ8zVH73xHf3zSs9ps_puUFZoA0ALvE-yHA-D&s=10"},
+  {n:"Sue Storm",     c:"#38bdf8", img:"https://static0.moviewebimages.com/wordpress/wp-content/uploads/2026/07/sue-storm-invisible-woman-in-avengers-doomsday.jpg?q=49&fit=crop&w=825&dpr=2"},
+  {n:"Cíclope",       c:"#ff2a2a", img:"https://i.redd.it/uvv9rhuc7hjh1.png"},
+  {n:"Loki",          c:"#f97316", img:"https://static0.srcdn.com/wordpress/wp-content/uploads/2026/07/loki-in-avengers-doomsday-trailer-1.jpg?w=1600&h=900&fit=crop"},
+  {n:"Reed Richards", c:"#2563eb", img:"https://static0.srcdn.com/wordpress/wp-content/uploads/2026/07/reed-richards-the-fantastic-four-and-thor-in-avengers-doomsday.jpg?w=1600&h=1200&fit=crop"},
+  {n:"Thor",          c:"#67e8f9", img:"https://cdn.mos.cms.futurecdn.net/v2/t:0,l:250,cw:1500,ch:1125,q:80,w:1500/a66chY9H8Jvrytxsnicuga.jpg"},
+  {n:"Doctor Doom",   c:"#2fbf71", img:"https://es.hollywoodreporter.com/wp-content/uploads/2026/08/Conoce-mas-del-Doctor-Doom-en-el-nuevo-trailer-de-Avengers-Doomsday.jpg"}
+];
+const MAX = CHARS.length - 1;
+
+/* ===== CONTADOR (17 dic, hora local de quien juega) ===== */
+const now0 = new Date();
+let target = new Date(now0.getFullYear(), 11, 17, 0, 0, 0);
+if (target < now0 && now0.getMonth() === 11 && now0.getDate() > 17) target = new Date(now0.getFullYear(), 11, 17);
+const p2 = n => String(n).padStart(2, "0");
+function tick(){
+  let t = Math.max(0, target - new Date());
+  const s = Math.floor(t/1000);
+  if (t === 0){ document.getElementById("cd").style.display="none"; document.getElementById("prem").textContent="Ya en cines"; return; }
+  d.textContent = p2(Math.floor(s/86400)); h.textContent = p2(Math.floor(s%86400/3600));
+  m.textContent = p2(Math.floor(s%3600/60)); document.getElementById("s").textContent = p2(s%60);
+}
+tick(); setInterval(tick, 1000);
+
+/* ===== JUEGO ===== */
+const boardEl = document.getElementById("board"), gridEl = document.getElementById("grid");
+const scoreEl = document.getElementById("score"), bestEl = document.getElementById("best");
+const ov = document.getElementById("ov"), ovT = document.getElementById("ovT"), ovP = document.getElementById("ovP"), ovB = document.getElementById("ovB");
+const POS = i => `calc(${i} * (var(--cell) + var(--gap)))`;
+let tiles, score, best = 0, nextId, won, keepGoing, over, els = new Map();
+try { best = +localStorage.getItem("doom2048best") || 0; } catch(e){}
+bestEl.textContent = best;
+
+for (let r=0;r<4;r++) for (let c=0;c<4;c++){
+  const s = document.createElement("div"); s.className="slot"; s.style.left=POS(c); s.style.top=POS(r); gridEl.appendChild(s);
+}
+
+function addRandom(){
+  const free = [];
+  for (let r=0;r<4;r++) for (let c=0;c<4;c++) if (!tiles.some(t=>!t.dead && t.r===r && t.c===c)) free.push([r,c]);
+  if (!free.length) return;
+  const [r,c] = free[Math.floor(Math.random()*free.length)];
+  tiles.push({id:nextId++, l: Math.random()<.9?0:1, r, c, isNew:true});
+}
+function makeEl(t){
+  const ch = CHARS[t.l], e = document.createElement("div");
+  e.className = "tile"; e.style.setProperty("--c", ch.c);
+  e.innerHTML = `<img alt="" referrerpolicy="no-referrer" loading="eager" src="${ch.img}" onerror="this.style.display='none'"><span class="nm">${ch.n}</span>`;
+  e.style.background = `linear-gradient(160deg, ${ch.c}55, #0b1410)`;
+  gridEl.appendChild(e); return e;
+}
+function render(){
+  for (const t of tiles){
+    let e = els.get(t.id);
+    if (!e){ e = makeEl(t); els.set(t.id, e); if (t.isNew) e.classList.add("new"); }
+    if (t.lvlChanged){
+      const old = e; const ne = makeEl(t); ne.style.left = old.style.left; ne.style.top = old.style.top;
+      old.remove(); e = ne; els.set(t.id, e); e.classList.add("pop"); t.lvlChanged = false;
+    }
+    e.style.left = POS(t.c); e.style.top = POS(t.r);
+    e.classList.toggle("max", t.l === MAX);
+    e.style.zIndex = t.dead ? 1 : 2 + t.l;
+    t.isNew = false;
+  }
+  tiles.filter(t=>t.dead).forEach(t=>{ const e = els.get(t.id); setTimeout(()=>e && e.remove(), 130); els.delete(t.id); });
+  tiles = tiles.filter(t=>!t.dead);
+  scoreEl.textContent = score;
+  if (score > best){ best = score; bestEl.textContent = best; try{ localStorage.setItem("doom2048best", best); }catch(e){} }
+}
+function start(){
+  gridEl.querySelectorAll(".tile").forEach(e=>e.remove()); els.clear();
+  tiles=[]; score=0; nextId=1; won=false; keepGoing=false; over=false; ov.classList.remove("show");
+  addRandom(); addRandom(); render();
+}
+function canMove(){
+  if (tiles.length < 16) return true;
+  return tiles.some(a => tiles.some(b => b.l===a.l && Math.abs(a.r-b.r)+Math.abs(a.c-b.c)===1));
+}
+function move(dr, dc){
+  if (over || (won && !keepGoing)) return;
+  let moved = false;
+  const order = [...tiles].sort((a,b)=> (dr>0? b.r-a.r : dr<0? a.r-b.r : 0) || (dc>0? b.c-a.c : dc<0? a.c-b.c : 0));
+  const at = (r,c)=>tiles.find(t=>!t.dead && t.r===r && t.c===c);
+  const merged = new Set();
+  for (const t of order){
+    let r=t.r, c=t.c;
+    while (true){
+      const nr=r+dr, nc=c+dc;
+      if (nr<0||nr>3||nc<0||nc>3) break;
+      const o = at(nr,nc);
+      if (!o){ r=nr; c=nc; continue; }
+      if (o.l===t.l && !merged.has(o.id) && t.l<MAX){
+        merged.add(o.id); t.dead=true; o.l++; o.lvlChanged=true; score += 2**(o.l+1);
+        r=nr; c=nc; if (o.l===MAX) won=true; moved=true;
+      }
+      break;
+    }
+    if (t.dead){ t.r=r; t.c=c; }
+    else if (r!==t.r || c!==t.c){ t.r=r; t.c=c; moved=true; }
+  }
+  if (!moved) return;
+  addRandom(); render();
+  if (won && !keepGoing){
+    setTimeout(()=>{ ovT.textContent="Doom reina"; ovP.textContent="Llegaste a Doctor Doom"; ovB.textContent="Seguir jugando"; ovB.onclick=()=>{keepGoing=true;ov.classList.remove("show")}; ov.classList.add("show"); }, 450);
+  } else if (!canMove()){
+    over = true;
+    setTimeout(()=>{ ovT.textContent="Fin del juego"; ovP.textContent=`Puntos: ${score}`; ovB.textContent="Intentar de nuevo"; ovB.onclick=start; ov.classList.add("show"); }, 400);
+  }
+}
+
+/* Controles */
+addEventListener("keydown", e=>{
+  const k = {ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1],w:[-1,0],s:[1,0],a:[0,-1],d:[0,1]}[e.key];
+  if (k){ e.preventDefault(); move(...k); }
+});
+
+/* Controles tactiles con botones */
+
+document.querySelectorAll(".dir-btn").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        const dr = Number(button.dataset.dr);
+        const dc = Number(button.dataset.dc);
+
+        move(dr, dc);
+
+    });
+
+});
+
+let sx, sy;
+boardEl.addEventListener("touchstart", e=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; }, {passive:true});
+boardEl.addEventListener("touchend", e=>{
+  const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+  if (Math.max(Math.abs(dx),Math.abs(dy)) < 24) return;
+  Math.abs(dx)>Math.abs(dy) ? move(0, dx>0?1:-1) : move(dy>0?1:-1, 0);
+}, {passive:true});
+document.addEventListener("touchmove", e=>{ if (boardEl.contains(e.target)) e.preventDefault(); }, {passive:false});
+document.getElementById("restart").onclick = start;
+
+/* Panel desplegable de personajes (de Doom hacia abajo) */
+document.getElementById("rl").innerHTML = [...CHARS].reverse().map(ch =>
+  `<li style="--c:${ch.c}"><img alt="" referrerpolicy="no-referrer" src="${ch.img}" onerror="this.style.display='none'"><span>${ch.n}</span></li>`).join("");
+const tg = document.getElementById("tg"), roster = document.getElementById("roster");
+tg.onclick = () => { const o = roster.classList.toggle("open"); tg.setAttribute("aria-expanded", o); };
+
+/* ===== REPRODUCTOR DE MUSICA ===== */
+
+const bgMusic = document.getElementById("bgMusic");
+const mu = document.getElementById("mu");
+
+let musicEnabled = false;
+
+bgMusic.volume = 0.35;
+
+async function setMusic(enabled) {
+
+    if (enabled) {
+
+        try {
+            await bgMusic.play();
+
+            musicEnabled = true;
+            mu.classList.remove("muted");
+            mu.setAttribute("aria-label", "Silenciar música");
+
+        } catch (error) {
+
+            musicEnabled = false;
+            mu.classList.add("muted");
+
+            mu.setAttribute("aria-label", "No se pudo reproducir la música");
+
+            console.warn("No se pudo reproducir el audio:", error);
+        }
+
+    } else {
+
+        bgMusic.pause();
+
+        musicEnabled = false;
+        mu.classList.add("muted");
+        mu.setAttribute("aria-label", "Activar música");
+    }
+}
+
+mu.addEventListener("click", () => {
+    setMusic(!musicEnabled);
+});
+
+start();
+</script>
+</body>
+</html>
